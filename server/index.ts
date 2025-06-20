@@ -38,6 +38,31 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+  
+  // Create admin user in production if environment variable is set
+  if (process.env.NODE_ENV === 'production' && process.env.CREATE_ADMIN_USER === 'true') {
+    try {
+      const { storage } = await import('./storage');
+      const { hashPassword } = await import('./auth');
+      
+      const existingAdmin = await storage.getUserByUsername('admin');
+      if (!existingAdmin) {
+        const hashedPassword = await hashPassword('admin123');
+        await storage.createUser({
+          username: 'admin',
+          password: hashedPassword,
+          name: 'System Administrator',
+          email: 'admin@tournament.com',
+          isAdmin: true,
+          isAppAdmin: true,
+          subscriptionStatus: 'active'
+        });
+        log('Admin user created: admin/admin123');
+      }
+    } catch (error) {
+      log('Error creating admin user: ' + error.message);
+    }
+  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
