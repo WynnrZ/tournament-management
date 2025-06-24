@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: ams-advisor-management
+    env: node
+    plan: starter
+    buildCommand: npm install --production=false && npm run build && npm run db:push
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ams-postgres
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: VITE_GOOGLE_MAPS_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+
+databases:
+  - name: ams-postgres
+    databaseName: ams_database
+    plan: starter
